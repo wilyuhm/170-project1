@@ -1,11 +1,13 @@
 #project 1 the eight puzzle
+import copy
 
 key_row_1 = [1,2,3]
 key_row_2 = [4,5,6]
 key_row_3 = [7,8,'b']
 key_puzzle = [key_row_1, key_row_2, key_row_3]
 
-def move_blank_left(_puzzle):
+def move_blank_left(const_puzzle):
+	_puzzle = const_puzzle
 	for row in _puzzle: 
 		if 'b' in row:
 			b_index = row.index('b')
@@ -13,10 +15,13 @@ def move_blank_left(_puzzle):
 				temp = row[b_index-1]
 				row[b_index-1] = row[b_index] 
 				row[b_index] = temp
-				return	
+				return _puzzle
+			else:
+				return 0	
 
 
-def move_blank_right(_puzzle):
+def move_blank_right(const_puzzle):
+	_puzzle = const_puzzle
 	for row in _puzzle: 
 		if 'b' in row:
 			b_index = row.index('b')
@@ -24,36 +29,40 @@ def move_blank_right(_puzzle):
 				temp = row[b_index+1]
 				row[b_index+1] = row[b_index] 
 				row[b_index] = temp
-				return	
+				return _puzzle
+			else:
+				return 0	
 
 
-def move_blank_up(_puzzle):
+def move_blank_up(const_puzzle):
+	_puzzle = const_puzzle
 	row_index = 0
 	for row in _puzzle: 
 		if 'b' in row:
 			if row_index == 0: #can't move up from the top
-				return
+				return 0
 			b_index = row.index('b')
 			temp = _puzzle[row_index-1][b_index]
 			_puzzle[row_index-1][b_index] = 'b'
 			row[b_index] = temp 
-			return
+			return _puzzle
 		row_index = row_index+1
 	
-def move_blank_down(_puzzle):
+def move_blank_down(const_puzzle):
+	_puzzle = const_puzzle
 	row_index = 0
 	for row in _puzzle: 
 		if 'b' in row:
 			if row_index == 2: #can't move down from the bottom
-				return
+				return 0
 			b_index = row.index('b')
 			temp = _puzzle[row_index+1][b_index]
 			_puzzle[row_index+1][b_index] = 'b'
 			row[b_index] = temp 
-			return
+			return _puzzle
 		row_index = row_index+1
 
-def get_tile_location(_puzzle, tile):
+def get_tile_location(_puzzle, tile): #called by get_manhattan_distance, returns coordinates
 	row_index = 2
 	for row in _puzzle:
 		if tile in row:
@@ -68,27 +77,65 @@ def get_manhattan_distance(_puzzle, _key_puzzle):
 	for row in _puzzle:
 		key_x = 0
 		for tile in row:
-			if(tile == 'b'):
-				break
-			(x,y) = get_tile_location(_key_puzzle, tile)
-			distance += abs(key_x-x)
-			distance += abs(key_y-y)	
+			if(tile != 'b'):		
+				(x,y) = get_tile_location(_key_puzzle, tile)
+				distance += abs(key_x-x)
+				distance += abs(key_y-y)	
 			key_x+=1
 		key_y-=1	
 	return distance	
 
-
-row1 = [1,2,3]
-row2 = [4,'b',6]
+def astar_manhattan(_puzzle, _key_puzzle):
+	frontier = [] #new nodes...stores pair (new_puzzle, g(n)+ h(n))
+	visited = [] #already visited
+	g=0 #g(n)
+	visiting = copy.deepcopy(_puzzle)
+	while g<3:
+		h=get_manhattan_distance(visiting, _key_puzzle)
+		visited.append(_puzzle)	
+		if h == 0:
+			print 'done'
+			return
+		g+=1
+		new_up = move_blank_up(copy.deepcopy(visiting))
+		if new_up not in visited and new_up != 0:
+			frontier.append((new_up, g+get_manhattan_distance(new_up, _key_puzzle)))
+		new_down = move_blank_down(copy.deepcopy(visiting))
+		if new_down not in visited and new_down != 0:
+			frontier.append((new_down, g+get_manhattan_distance(new_down, _key_puzzle)))
+		new_left = move_blank_left(copy.deepcopy(visiting))
+		if new_left not in visited and new_left != 0:
+			frontier.append((new_left, g+get_manhattan_distance(new_left, _key_puzzle)))
+		new_right = move_blank_right(copy.deepcopy(visiting))
+		if new_right not in visited and new_right != 0:
+			frontier.append((new_right, g+get_manhattan_distance(new_right, _key_puzzle)))
+		
+		#frontier now has all new puzzles, let's visit the best one (smallest f(n)) 
+		
+		smallest_fn = frontier[0][1]
+		smallest_fn_index = 0
+		index = 0
+		for node, fn in frontier:
+			if fn < smallest_fn:
+				smallest_fn = fn
+				smallest_fn_index = index
+			index+=1
+		#got smallest fn
+		visiting = copy.deepcopy(frontier[smallest_fn_index][0])
+		frontier.pop(smallest_fn_index)
+		visited.append(visiting)
+		print 'Checking out...'
+		print visiting
+				
+	
+row1 = [1,'b',3]
+row2 = [4,2,6]
 row3 = [7,5,8]
-puzzle = [row1,row2,row3]
-print puzzle
-print get_manhattan_distance(puzzle, key_puzzle)
-move_blank_up(puzzle)
-print puzzle
-move_blank_left(puzzle)
-print get_manhattan_distance(puzzle, key_puzzle)
-print puzzle
-move_blank_down(puzzle)
-print get_manhattan_distance(puzzle, key_puzzle)
-print puzzle
+default_puzzle = [row1,row2,row3]
+
+print 'Welcome to William Keidel\'s 8-puzzle solver.'
+answer = input('Type "1" to use a default puzzle, or "2" to enter your own puzzle.')
+if answer == 1:
+	astar_manhattan(default_puzzle, key_puzzle)
+elif answer == 2:
+	print 'hi'
