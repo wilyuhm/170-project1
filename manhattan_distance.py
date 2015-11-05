@@ -84,48 +84,56 @@ def get_manhattan_distance(_puzzle, _key_puzzle):
 			key_x+=1
 		key_y-=1	
 	return distance	
+def print_array(a):
+	for row in a:
+		print row
 
 def astar_manhattan(_puzzle, _key_puzzle):
-	frontier = [] #new nodes...stores pair (new_puzzle, g(n)+ h(n))
+	frontier = [] #new nodes...stores triplet (new_puzzle, g(n), h(n))
 	visited = [] #already visited
 	g=0 #g(n)
 	visiting = copy.deepcopy(_puzzle)
+	print 'Expanding state: '
+	print_array(visiting)
 	while g<3:
 		h=get_manhattan_distance(visiting, _key_puzzle)
 		visited.append(_puzzle)	
 		if h == 0:
-			print 'done'
+			print 'Goal!'
 			return
 		g+=1
 		new_up = move_blank_up(copy.deepcopy(visiting))
 		if new_up not in visited and new_up != 0:
-			frontier.append((new_up, g+get_manhattan_distance(new_up, _key_puzzle)))
+			frontier.append((new_up, g,get_manhattan_distance(new_up, _key_puzzle)))
 		new_down = move_blank_down(copy.deepcopy(visiting))
 		if new_down not in visited and new_down != 0:
-			frontier.append((new_down, g+get_manhattan_distance(new_down, _key_puzzle)))
+			frontier.append((new_down, g,get_manhattan_distance(new_down, _key_puzzle)))
 		new_left = move_blank_left(copy.deepcopy(visiting))
 		if new_left not in visited and new_left != 0:
-			frontier.append((new_left, g+get_manhattan_distance(new_left, _key_puzzle)))
+			frontier.append((new_left, g,get_manhattan_distance(new_left, _key_puzzle)))
 		new_right = move_blank_right(copy.deepcopy(visiting))
 		if new_right not in visited and new_right != 0:
-			frontier.append((new_right, g+get_manhattan_distance(new_right, _key_puzzle)))
+			frontier.append((new_right, g,get_manhattan_distance(new_right, _key_puzzle)))
 		
 		#frontier now has all new puzzles, let's visit the best one (smallest f(n)) 
 		
-		smallest_fn = frontier[0][1]
+		smallest_gn = frontier[0][1]
+		smallest_hn = frontier[0][2]
+		smallest_fn = smallest_gn + smallest_hn
 		smallest_fn_index = 0
 		index = 0
-		for node, fn in frontier:
-			if fn < smallest_fn:
-				smallest_fn = fn
+		for node, gn, hn in frontier:
+			if gn+hn < smallest_fn:
+				smallest_fn = gn+hn
 				smallest_fn_index = index
 			index+=1
 		#got smallest fn
 		visiting = copy.deepcopy(frontier[smallest_fn_index][0])
 		frontier.pop(smallest_fn_index)
 		visited.append(visiting)
-		print 'Checking out...'
-		print visiting
+		print '\nThe best state to expand with a g(n) = ' + str(smallest_gn) + ' and a h(n) = ' + str(smallest_hn) + ' is...'
+		print_array(visiting)
+		print 'Expanding this node...'
 				
 	
 row1 = [1,'b',3]
@@ -138,4 +146,27 @@ answer = input('Type "1" to use a default puzzle, or "2" to enter your own puzzl
 if answer == 1:
 	astar_manhattan(default_puzzle, key_puzzle)
 elif answer == 2:
-	print 'hi'
+	print 'Enter your puzzle, use a "b" or 0 to represent the blank\n'
+	user_row1 = raw_input('Enter the first row, use space or tabs between numbers   ')
+	user_row2 = raw_input('Enter the second row, use space or tabs between numbers   ')
+	user_row3 = raw_input('Enter the third row, use space or tabs between numbers   ')
+	x1,y1,z1 = user_row1.split()
+	user_row1 = [x1,y1,z1]
+	x2,y2,z2 = user_row2.split()
+	user_row2 = [x2,y2,z2]
+	x3,y3,z3 = user_row3.split()
+	user_row3 = [x3,y3,z3]
+	user_puzzle = [user_row1, user_row2, user_row3]
+	for row in user_puzzle:
+		for i in row:
+			if i != 'b'  and i != '0':
+				x = int(i)
+				row[row.index(i)] = x
+			else:
+				row[row.index(i)] = 'b'
+	
+	print 'Enter your choice of algorithm:'
+	print '1. A* with the Manhattan distance heuristic'
+	choice = input()
+	if choice == 1:
+		astar_manhattan(user_puzzle, key_puzzle)	
