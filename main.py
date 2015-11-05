@@ -1,3 +1,4 @@
+import sys
 import copy
 
 key_row_1 = [1,2,3]
@@ -84,6 +85,22 @@ def get_manhattan_distance(_puzzle, _key_puzzle):
 		key_y-=1	
 	return distance	
 
+def get_misplacedtiles(_puzzle, _key_puzzle):
+	if _puzzle == _key_puzzle:
+		return 0
+	key_y = 2
+	misplaced_tiles = 0
+	for row in _puzzle:
+		key_x = 0
+		for tile in row:
+			if(tile != 'b'):		
+				(x,y) = get_tile_location(_key_puzzle, tile)
+				if (x,y) != (key_x, key_y):
+					misplaced_tiles+=1
+			key_x+=1
+		key_y-=1	
+	return misplaced_tiles
+
 def print_array(a):
 	for row in a:
 		print row
@@ -95,9 +112,9 @@ def astar_manhattan(_puzzle, _key_puzzle):
 	visiting = copy.deepcopy(_puzzle)
 	print 'Expanding state: '
 	print_array(visiting)
+	visited.append(_puzzle)
 	while g<32:
 		h=get_manhattan_distance(visiting, _key_puzzle)
-		visited.append(_puzzle)	
 		if h == 0:
 			print 'Goal!'
 			return
@@ -143,16 +160,127 @@ def astar_manhattan(_puzzle, _key_puzzle):
 	print 'No solution'
 	return
 
+
+def astar_misplacedtiles(_puzzle, _key_puzzle):
+	frontier = [] #new nodes...stores triplet (new_puzzle, g(n), h(n))
+	visited = [] #already visited
+	g=1 #g(n)
+	visiting = copy.deepcopy(_puzzle)
+	print 'Expanding state: '
+	print_array(visiting)
+	visited.append(_puzzle)
+	while g<32:
+		h=get_misplacedtiles(visiting, _key_puzzle)
+		if h == 0:
+			print 'Goal!'
+			return
+
+		new_up = move_blank_up(copy.deepcopy(visiting))
+		if new_up not in visited and new_up != 0:
+			frontier.append((new_up, g,get_misplacedtiles(new_up, _key_puzzle)))
+		new_down = move_blank_down(copy.deepcopy(visiting))
+		if new_down not in visited and new_down != 0:
+			frontier.append((new_down, g,get_misplacedtiles(new_down, _key_puzzle)))
+		new_left = move_blank_left(copy.deepcopy(visiting))
+		if new_left not in visited and new_left != 0:
+			frontier.append((new_left, g,get_misplacedtiles(new_left, _key_puzzle)))
+		new_right = move_blank_right(copy.deepcopy(visiting))
+		if new_right not in visited and new_right != 0:
+			frontier.append((new_right, g,get_misplacedtiles(new_right, _key_puzzle)))
+		
+		#frontier now has all new puzzles, let's visit the best one (smallest f(n)) 
+		
+		smallest_gn = frontier[0][1]
+		smallest_hn = frontier[0][2]
+		smallest_fn = smallest_gn + smallest_hn
+		smallest_fn_index = 0
+		index = 0
+		for node, gn, hn in frontier:
+			if gn+hn < smallest_fn:
+				smallest_fn = gn+hn
+				smallest_gn = gn
+				smallest_hn = hn
+				smallest_fn_index = index
+			index+=1
+		#got smallest fn
+		visiting = copy.deepcopy(frontier[smallest_fn_index][0])
+		frontier.pop(smallest_fn_index)
+		visited.append(visiting)
+		if(smallest_hn == 0):
+			print 'Goal!'
+			return
+		print '\nThe best state to expand with a g(n) = ' + str(smallest_gn) + ' and a h(n) = ' + str(smallest_hn) + ' is...'
+		print_array(visiting)
+		print 'Expanding this node...'
+		g = smallest_gn + 1
+	print 'No solution'
+	return
+
+def uniform_cost_search(_puzzle, _key_puzzle):
+	frontier = [] #new nodes...stores triplet (new_puzzle, g(n), h(n))
+	visited = [] #already visited
+	g=1 #g(n)
+	visiting = copy.deepcopy(_puzzle)
+	print 'Expanding state: '
+	print_array(visiting)
+	visited.append(_puzzle)
+	while g<32:
+		if visiting == _key_puzzle:
+			print 'Goal!'
+			return
+		new_up = move_blank_up(copy.deepcopy(visiting))
+		if new_up not in visited and new_up != 0:
+			frontier.append((new_up, g))
+		new_down = move_blank_down(copy.deepcopy(visiting))
+		if new_down not in visited and new_down != 0:
+			frontier.append((new_down, g))
+		new_left = move_blank_left(copy.deepcopy(visiting))
+		if new_left not in visited and new_left != 0:
+			frontier.append((new_left, g))
+		new_right = move_blank_right(copy.deepcopy(visiting))
+		if new_right not in visited and new_right != 0:
+			frontier.append((new_right, g))
+		
+		#frontier now has all new puzzles, let's visit the best one (smallest f(n)) 
+		
+		smallest_gn = frontier[0][1]
+		smallest_hn = 0
+		smallest_fn = smallest_gn + smallest_hn
+		smallest_fn_index = 0
+		index = 0
+		for node, gn in frontier:
+			if gn+0 < smallest_fn:
+				smallest_fn = gn+hn
+				smallest_gn = gn
+				smallest_hn = 0
+				smallest_fn_index = index
+			index+=1
+		#got smallest fn
+		visiting = copy.deepcopy(frontier[smallest_fn_index][0])
+		frontier.pop(smallest_fn_index)
+		visited.append(visiting)
+		if(visiting == _key_puzzle):
+			print 'Goal!'
+			return
+		print '\nThe best state to expand with a g(n) = ' + str(smallest_gn) + ' and a h(n) = ' + str(smallest_hn) + ' is...'
+		print_array(visiting)
+		print 'Expanding this node...'
+		g = smallest_gn + 1
+	print 'No solution'
+	return
+
+#main
 row1 = [1,'b',3]
 row2 = [4,2,6]
 row3 = [7,5,8]
 default_puzzle = [row1,row2,row3]
 
 print 'Welcome to William Keidel\'s 8-puzzle solver.'
-answer = input('Type "1" to use a default puzzle, or "2" to enter your own puzzle.')
+answer = input('Type "1" to use a default puzzle, or "2" to enter your own puzzle.\n')
 if answer == 1:
-	astar_manhattan(default_puzzle, key_puzzle)
+	puzzlechoice = 'default'
 elif answer == 2:
+	puzzlechoice = 'custom'
 	print '\nEnter your puzzle, use a "b" or 0 to represent the blank'
 	user_row1 = raw_input('Enter the first row, use space or tabs between numbers   ')
 	user_row2 = raw_input('Enter the second row, use space or tabs between numbers   ')
@@ -171,9 +299,19 @@ elif answer == 2:
 				row[row.index(i)] = x
 			else:
 				row[row.index(i)] = 'b'
-	
-	print 'Enter your choice of algorithm:'
-	print '1. A* with the Manhattan distance heuristic'
-	choice = input()
-	if choice == 1:
-		astar_manhattan(user_puzzle, key_puzzle)	
+
+print 'Enter your choice of algorithm:'
+print '1. Uniform Cost Search'
+print '2. A* with the Misplaced Tiles heuristic'
+print '3. A* with the Manhattan distance heuristic'
+choice = input()
+if puzzlechoice == 'default':
+	puzzle = default_puzzle
+else:
+	puzzle = user_puzzle
+if choice == 3:
+	astar_manhattan(puzzle, key_puzzle)
+elif choice == 2:
+	astar_misplacedtiles(puzzle, key_puzzle)	
+else:
+	uniform_cost_search(puzzle, key_puzzle)
