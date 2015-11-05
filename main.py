@@ -109,15 +109,17 @@ def astar_manhattan(_puzzle, _key_puzzle):
 	frontier = [] #new nodes...stores triplet (new_puzzle, g(n), h(n))
 	visited = [] #already visited
 	g=1 #g(n)
+	numNodes = 1
+	max_nodes = 1
 	visiting = copy.deepcopy(_puzzle)
 	print 'Expanding state: '
 	print_array(visiting)
 	visited.append(_puzzle)
+	h=get_manhattan_distance(visiting, _key_puzzle)
+	if h == 0:
+		print 'Goal was the same as original'
+		return (1,1,1) 
 	while g<32:
-		h=get_manhattan_distance(visiting, _key_puzzle)
-		if h == 0:
-			print 'Goal!'
-			return
 
 		new_up = move_blank_up(copy.deepcopy(visiting))
 		if new_up not in visited and new_up != 0:
@@ -132,6 +134,10 @@ def astar_manhattan(_puzzle, _key_puzzle):
 		if new_right not in visited and new_right != 0:
 			frontier.append((new_right, g,get_manhattan_distance(new_right, _key_puzzle)))
 		
+		numNodes+=4
+		tmp_len = len(frontier)
+		if tmp_len > max_nodes:
+			max_nodes = tmp_len
 		#frontier now has all new puzzles, let's visit the best one (smallest f(n)) 
 		
 		smallest_gn = frontier[0][1]
@@ -152,7 +158,7 @@ def astar_manhattan(_puzzle, _key_puzzle):
 		visited.append(visiting)
 		if(smallest_hn == 0):
 			print 'Goal!'
-			return
+			return (numNodes, max_nodes, smallest_gn)
 		print '\nThe best state to expand with a g(n) = ' + str(smallest_gn) + ' and a h(n) = ' + str(smallest_hn) + ' is...'
 		print_array(visiting)
 		print 'Expanding this node...'
@@ -165,15 +171,17 @@ def astar_misplacedtiles(_puzzle, _key_puzzle):
 	frontier = [] #new nodes...stores triplet (new_puzzle, g(n), h(n))
 	visited = [] #already visited
 	g=1 #g(n)
+	numNodes=1
+	max_nodes=1
 	visiting = copy.deepcopy(_puzzle)
 	print 'Expanding state: '
 	print_array(visiting)
 	visited.append(_puzzle)
+	h=get_misplacedtiles(visiting, _key_puzzle)
+	if h == 0:
+		print 'Goal!'
+		return
 	while g<32:
-		h=get_misplacedtiles(visiting, _key_puzzle)
-		if h == 0:
-			print 'Goal!'
-			return
 
 		new_up = move_blank_up(copy.deepcopy(visiting))
 		if new_up not in visited and new_up != 0:
@@ -188,6 +196,10 @@ def astar_misplacedtiles(_puzzle, _key_puzzle):
 		if new_right not in visited and new_right != 0:
 			frontier.append((new_right, g,get_misplacedtiles(new_right, _key_puzzle)))
 		
+		numNodes+=4
+		tmp_len = len(frontier)
+		if tmp_len > max_nodes:
+			max_nodes = tmp_len
 		#frontier now has all new puzzles, let's visit the best one (smallest f(n)) 
 		
 		smallest_gn = frontier[0][1]
@@ -208,7 +220,7 @@ def astar_misplacedtiles(_puzzle, _key_puzzle):
 		visited.append(visiting)
 		if(smallest_hn == 0):
 			print 'Goal!'
-			return
+			return (numNodes,max_nodes,smallest_gn)
 		print '\nThe best state to expand with a g(n) = ' + str(smallest_gn) + ' and a h(n) = ' + str(smallest_hn) + ' is...'
 		print_array(visiting)
 		print 'Expanding this node...'
@@ -219,15 +231,17 @@ def astar_misplacedtiles(_puzzle, _key_puzzle):
 def uniform_cost_search(_puzzle, _key_puzzle):
 	frontier = [] #new nodes...stores triplet (new_puzzle, g(n), h(n))
 	visited = [] #already visited
+	numNodes = 1
+	max_nodes = 1
 	g=1 #g(n)
 	visiting = copy.deepcopy(_puzzle)
 	print 'Expanding state: '
 	print_array(visiting)
 	visited.append(_puzzle)
-	while g<32:
-		if visiting == _key_puzzle:
-			print 'Goal!'
-			return
+	if visiting == _key_puzzle:
+		print 'Goal! Same as start.'
+		return (0,0,0)
+	while g<31:
 		new_up = move_blank_up(copy.deepcopy(visiting))
 		if new_up not in visited and new_up != 0:
 			frontier.append((new_up, g))
@@ -241,6 +255,10 @@ def uniform_cost_search(_puzzle, _key_puzzle):
 		if new_right not in visited and new_right != 0:
 			frontier.append((new_right, g))
 		
+		numNodes+=4
+		tmp_len = len(frontier)
+		if tmp_len > max_nodes:
+			max_nodes = tmp_len
 		#frontier now has all new puzzles, let's visit the best one (smallest f(n)) 
 		
 		smallest_gn = frontier[0][1]
@@ -261,7 +279,7 @@ def uniform_cost_search(_puzzle, _key_puzzle):
 		visited.append(visiting)
 		if(visiting == _key_puzzle):
 			print 'Goal!'
-			return
+			return (numNodes, max_nodes,smallest_gn) 
 		print '\nThe best state to expand with a g(n) = ' + str(smallest_gn) + ' and a h(n) = ' + str(smallest_hn) + ' is...'
 		print_array(visiting)
 		print 'Expanding this node...'
@@ -309,9 +327,16 @@ if puzzlechoice == 'default':
 	puzzle = default_puzzle
 else:
 	puzzle = user_puzzle
+n= 0
+q = 0
+d=0
 if choice == 3:
-	astar_manhattan(puzzle, key_puzzle)
+	n,q,d = astar_manhattan(puzzle, key_puzzle)
 elif choice == 2:
-	astar_misplacedtiles(puzzle, key_puzzle)	
+	n,q,d = astar_misplacedtiles(puzzle, key_puzzle)	
 else:
-	uniform_cost_search(puzzle, key_puzzle)
+	n,q,d = uniform_cost_search(puzzle, key_puzzle)
+
+print '\nTo solve this problem the search algorithm expanded a total of ' + str(n) + ' nodes.'
+print 'The maximum number of nodes in the queue at any one time was ' + str(q) + '.'
+print 'The depth of the goal node was ' + str(d) + '.'
