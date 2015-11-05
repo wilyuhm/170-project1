@@ -91,17 +91,17 @@ def print_array(a):
 def astar_manhattan(_puzzle, _key_puzzle):
 	frontier = [] #new nodes...stores triplet (new_puzzle, g(n), h(n))
 	visited = [] #already visited
-	g=0 #g(n)
+	g=1 #g(n)
 	visiting = copy.deepcopy(_puzzle)
 	print 'Expanding state: '
 	print_array(visiting)
-	while g<3:
+	while g<32:
 		h=get_manhattan_distance(visiting, _key_puzzle)
 		visited.append(_puzzle)	
 		if h == 0:
 			print 'Goal!'
 			return
-		g+=1
+
 		new_up = move_blank_up(copy.deepcopy(visiting))
 		if new_up not in visited and new_up != 0:
 			frontier.append((new_up, g,get_manhattan_distance(new_up, _key_puzzle)))
@@ -125,15 +125,23 @@ def astar_manhattan(_puzzle, _key_puzzle):
 		for node, gn, hn in frontier:
 			if gn+hn < smallest_fn:
 				smallest_fn = gn+hn
+				smallest_gn = gn
+				smallest_hn = hn
 				smallest_fn_index = index
 			index+=1
 		#got smallest fn
 		visiting = copy.deepcopy(frontier[smallest_fn_index][0])
 		frontier.pop(smallest_fn_index)
 		visited.append(visiting)
+		if(smallest_hn == 0):
+			print 'Goal!'
+			return
 		print '\nThe best state to expand with a g(n) = ' + str(smallest_gn) + ' and a h(n) = ' + str(smallest_hn) + ' is...'
 		print_array(visiting)
 		print 'Expanding this node...'
+		g = smallest_gn + 1
+	print 'No solution'
+	return
 				
 	
 row1 = [1,'b',3]
